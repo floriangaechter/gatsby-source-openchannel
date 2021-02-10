@@ -3,35 +3,44 @@ const base64 = require(`base-64`)
 
 const APP_NODE_TYPE = `OpenChannelApps`
 
-exports.onPreInit = () => console.log('Loaded gatsby-source-openchannel');
-
 exports.sourceNodes = async ({
   actions,
   createContentDigest,
   createNodeId,
   getNodesByType,
+  reporter
 }, {
     APIBaseURL, MarketplaceId, Secret
 }) => {
   const { createNode } = actions
 
   if (!APIBaseURL) {
-      throw new Error(`APIBaseURL is required`)
+        reporter.error(`APIBaseURL is required`)
+        return
   }
 
   if (!MarketplaceId) {
-      throw new Error(`MarketplaceId is required`)
+      reporter.error(`MarketplaceId is required`)
+        return
   }
 
   if (!Secret) {
-      throw new Error(`Secret is required`)
+      reporter.error(`Secret is required`)
+      return
   }
 
+  const openChannelFetchActivity = reporter.activityTimer(
+    `Fetch all data from Open Channel`
+  )
+
+  reporter.info(`Starting to fetch all data from Open Channel`)
+  openChannelFetchActivity.start()
   const response = await fetch(`${APIBaseURL}/apps`, {
     headers: {
       Authorization: `Basic ${base64.encode(`${MarketplaceId}:${Secret}`)}`
     }
   })
+  openChannelFetchActivity.end()
 
   const data = await response.json()
 
